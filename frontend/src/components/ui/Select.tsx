@@ -7,15 +7,21 @@ export interface SelectOption {
   label: string;
 }
 
-interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+export interface SelectGroup {
+  label: string;
   options: SelectOption[];
+}
+
+interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+  options?: SelectOption[];
+  groups?: SelectGroup[];
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   invalid?: boolean;
 }
 
-export function Select({ options, value, onChange, placeholder, invalid, className, ...rest }: SelectProps) {
+export function Select({ options, groups, value, onChange, placeholder, invalid, className, ...rest }: SelectProps) {
   return (
     <select
       className={cx(styles.select, invalid && styles.invalid, className)}
@@ -28,11 +34,21 @@ export function Select({ options, value, onChange, placeholder, invalid, classNa
           {placeholder}
         </option>
       )}
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
+      {groups
+        ? groups.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </optgroup>
+          ))
+        : (options ?? []).map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
     </select>
   );
 }

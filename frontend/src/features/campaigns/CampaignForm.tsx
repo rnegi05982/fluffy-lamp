@@ -54,6 +54,21 @@ export function CampaignForm() {
     [catalog],
   );
 
+  const factGroups = useMemo(() => {
+    const facts = catalog?.facts ?? [];
+    const categories: { label: string; key: string }[] = [
+      { label: 'Customer', key: 'CUSTOMER' },
+      { label: 'Cart', key: 'CART' },
+      { label: 'Product', key: 'PRODUCT' },
+    ];
+    return categories
+      .map((c) => ({
+        label: c.label,
+        options: facts.filter((f) => f.category === c.key).map((f) => ({ value: f.key, label: f.label })),
+      }))
+      .filter((g) => g.options.length > 0);
+  }, [catalog]);
+
   // Initialize the form once the data it needs is available.
   useEffect(() => {
     if (form || !catalog || catalog.facts.length === 0) return;
@@ -290,11 +305,7 @@ export function CampaignForm() {
             const fact = factByKey.get(rule.fact);
             return (
               <div key={ri} className={styles.ruleRow}>
-                <Select
-                  value={rule.fact}
-                  onChange={(v) => changeFact(ti, ri, v)}
-                  options={catalog.facts.map((f) => ({ value: f.key, label: f.label }))}
-                />
+                <Select value={rule.fact} onChange={(v) => changeFact(ti, ri, v)} groups={factGroups} />
                 <Select
                   value={rule.operator}
                   onChange={(v) => updateRule(ti, ri, { operator: v })}
