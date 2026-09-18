@@ -4,6 +4,7 @@ import { ApiError } from '../../lib/ApiError';
 import { logger } from '../../lib/logger';
 import { toDecimal128, toStringValue } from '../../lib/money/decimal';
 import { convertToBase } from '../../lib/money/fx';
+import { zonedToUtc } from '../../lib/time/zoned';
 import { FX_RATES } from '../reference/reference.data';
 import { processCashback, type CashbackOutcome } from '../../cashback/processor';
 import type { ProcessOrderRequest } from './orders.validation';
@@ -47,7 +48,7 @@ export async function processOrder(input: ProcessOrderRequest): Promise<ProcessO
   });
 
   const orderAmount = toStringValue(input.orderAmount);
-  const orderCreatedAt = new Date(input.orderCreatedAt);
+  const orderCreatedAt = zonedToUtc(input.orderCreatedAt, input.orderTimezone);
 
   // 1. Persist the order (always succeeds; cashback below is fault-isolated).
   const order = await Order.create({

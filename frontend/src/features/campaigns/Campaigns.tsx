@@ -29,10 +29,20 @@ const STATUS_LABEL: Record<CampaignStatus, string> = {
   DISABLED: 'Disabled',
 };
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Format a campaign-tz wall-clock ('YYYY-MM-DDTHH:mm:ss') without re-applying a timezone. */
+function formatLocal(s: string | null): string {
+  if (!s) return '—';
+  const [date, time] = s.split('T');
+  const [y, m, d] = (date ?? '').split('-');
+  const month = MONTHS[Number(m) - 1] ?? m;
+  return `${Number(d)} ${month} ${y}, ${(time ?? '').slice(0, 5)}`;
+}
+
 function formatSchedule(c: CampaignListItem): string {
   if (!c.startAt && !c.endAt) return 'Continuous';
-  const fmt = (s: string | null) => (s ? s.replace('T', ' ') : '—');
-  return `${fmt(c.startAtLocal)} → ${fmt(c.endAtLocal)}`;
+  return `${formatLocal(c.startAtLocal)} → ${formatLocal(c.endAtLocal)}`;
 }
 
 export function Campaigns() {
@@ -94,6 +104,12 @@ export function Campaigns() {
         </div>
       ) : (
         <Table>
+          <colgroup>
+            <col style={{ width: '34%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '38%' }} />
+            <col style={{ width: '12%' }} />
+          </colgroup>
           <thead>
             <tr>
               <th>Name</th>

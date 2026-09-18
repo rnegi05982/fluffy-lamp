@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Home } from '@/features/home/Home';
 import { Campaigns } from '@/features/campaigns/Campaigns';
 import { CampaignForm } from '@/features/campaigns/CampaignForm';
+import { OrderForm } from '@/features/orders/OrderForm';
 import { useStores } from '@/features/stores/useStores';
 import { useAppStore } from '@/store/appStore';
 import styles from './App.module.css';
@@ -50,9 +51,11 @@ export function App() {
         {currentView === 'home' && <Home />}
         {currentView === 'campaigns' && <Campaigns />}
         {currentView === 'campaign-form' && <CampaignForm />}
-        {currentView !== 'home' && currentView !== 'campaigns' && currentView !== 'campaign-form' && (
-          <ComingSoon label={VIEW_LABELS[currentView] ?? currentView} />
-        )}
+        {currentView === 'order-form' && <OrderForm />}
+        {currentView !== 'home' &&
+          currentView !== 'campaigns' &&
+          currentView !== 'campaign-form' &&
+          currentView !== 'order-form' && <ComingSoon label={VIEW_LABELS[currentView] ?? currentView} />}
       </main>
     </div>
   );
