@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Segmented } from '@/components/ui/Segmented';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
@@ -115,9 +116,13 @@ export function CampaignForm() {
   return (
     <form className={styles.page} onSubmit={submit}>
       <div className={styles.headerRow}>
-        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('campaigns')}>
-          <ArrowLeft size={16} /> Campaigns
-        </Button>
+        <Breadcrumbs
+          items={[
+            { home: true, view: 'home' },
+            { label: 'Campaigns', view: 'campaigns' },
+            { label: isEdit ? 'Edit campaign' : 'New campaign' },
+          ]}
+        />
         <div className={styles.headerActions}>
           <label className={styles.enable}>
             <input

@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 export interface ProcessOrderRequest {
@@ -31,7 +31,14 @@ export interface OrderOutcome {
 }
 
 export function useProcessOrder() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: ProcessOrderRequest) => api.post<OrderOutcome>('/orders/process', body),
+    onSuccess: () => {
+      // Balances / ledgers changed — refresh customer views.
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      qc.invalidateQueries({ queryKey: ['balance'] });
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+    },
   });
 }

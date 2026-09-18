@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -49,7 +49,6 @@ function announce(outcome: OrderOutcome) {
 
 export function OrderForm() {
   const storeId = useAppStore((s) => s.activeStoreId);
-  const navigate = useAppStore((s) => s.navigate);
   const { data: reference } = useReference();
   const { data: products } = useProducts();
   const { data: customers } = useCustomers();
@@ -154,11 +153,7 @@ export function OrderForm() {
 
   return (
     <form className={styles.page} onSubmit={submit}>
-      <div className={styles.headerRow}>
-        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('home')}>
-          <ArrowLeft size={16} /> Home
-        </Button>
-      </div>
+      <Breadcrumbs items={[{ home: true, view: 'home' }, { label: 'New order' }]} />
       <h1 className={styles.title}>New order</h1>
       {error && <div className={styles.error}>{error}</div>}
 

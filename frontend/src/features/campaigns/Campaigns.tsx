@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Table } from '@/components/ui/Table';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
@@ -75,6 +76,7 @@ export function Campaigns() {
 
   return (
     <div className={styles.page}>
+      <Breadcrumbs items={[{ home: true, view: 'home' }, { label: 'Campaigns' }]} />
       <PageHeader
         title="Campaigns"
         actions={
