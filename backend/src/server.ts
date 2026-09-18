@@ -3,11 +3,11 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { connectDB, disconnectDB } from './config/db';
 import { logger } from './lib/logger';
+import { startScheduler, stopScheduler } from './scheduler/worker';
 
 /**
- * Boot order: validate env (on import of config/env) → connect DB → start HTTP. The cron
- * scheduler is wired in a later step. Graceful shutdown closes the HTTP server and the DB
- * connection.
+ * Boot order: validate env (on import of config/env) → connect DB → start HTTP → start the
+ * cron scheduler. Graceful shutdown stops the scheduler and closes the HTTP + DB connections.
  */
 async function start(): Promise<void> {
   await connectDB();
@@ -17,12 +17,14 @@ async function start(): Promise<void> {
     logger.info(`API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
   });
 
+  startScheduler();
   setupGracefulShutdown(server);
 }
 
 function setupGracefulShutdown(server: Server): void {
   const shutdown = (signal: string): void => {
     logger.info(`${signal} received — shutting down`);
+    stopScheduler();
     server.close(() => {
       void disconnectDB().finally(() => process.exit(0));
     });
