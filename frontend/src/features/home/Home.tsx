@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Store as StoreIcon, Plus, ShoppingCart, Percent, Users } from 'lucide-react';
+import { Store as StoreIcon, Plus, ShoppingCart, Percent, Users, ChevronRight } from 'lucide-react';
+import type { View } from '@/store/appStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -10,6 +11,12 @@ import { useStores } from '@/features/stores/useStores';
 import { StoreForm } from '@/features/stores/StoreForm';
 import { useAppStore } from '@/store/appStore';
 import styles from './Home.module.css';
+
+const TILES: { view: View; icon: typeof ShoppingCart; title: string; desc: string }[] = [
+  { view: 'order-form', icon: ShoppingCart, title: 'New Order', desc: 'Simulate an order and run the cashback engine.' },
+  { view: 'campaigns', icon: Percent, title: 'Campaigns', desc: 'Create and manage cashback campaigns.' },
+  { view: 'customers', icon: Users, title: 'Customers', desc: 'View customers and their cashback balances.' },
+];
 
 export function Home() {
   const { data, isLoading, isError, refetch } = useStores();
@@ -87,7 +94,12 @@ export function Home() {
       </div>
 
       <Card>
-        <div className={styles.detailsHead}>Active store</div>
+        <div className={styles.detailsTop}>
+          <span className={styles.storeChip}>
+            <StoreIcon size={18} />
+          </span>
+          <div className={styles.detailsHead}>Active store</div>
+        </div>
         <div className={styles.detailsGrid}>
           <div className={styles.detail}>
             <span className={styles.detailLabel}>Name</span>
@@ -105,18 +117,18 @@ export function Home() {
       </Card>
 
       <div className={styles.tiles}>
-        <button className={styles.tile} onClick={() => navigate('order-form')}>
-          <ShoppingCart size={20} />
-          <span>New Order</span>
-        </button>
-        <button className={styles.tile} onClick={() => navigate('campaigns')}>
-          <Percent size={20} />
-          <span>Campaigns</span>
-        </button>
-        <button className={styles.tile} onClick={() => navigate('customers')}>
-          <Users size={20} />
-          <span>Customers</span>
-        </button>
+        {TILES.map((t) => (
+          <button key={t.view} className={styles.tile} onClick={() => navigate(t.view)}>
+            <span className={styles.tileIcon}>
+              <t.icon size={20} />
+            </span>
+            <span className={styles.tileBody}>
+              <span className={styles.tileTitle}>{t.title}</span>
+              <span className={styles.tileDesc}>{t.desc}</span>
+            </span>
+            <ChevronRight className={styles.tileArrow} size={18} />
+          </button>
+        ))}
       </div>
 
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} title="Create store">

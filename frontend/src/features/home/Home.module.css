@@ -21,13 +21,30 @@
   color: var(--color-text-muted);
 }
 
+.detailsTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.storeChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--color-primary);
+}
+
 .detailsHead {
   font-size: var(--font-xs);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
-  margin-bottom: var(--space-4);
 }
 
 .detailsGrid {
@@ -60,32 +77,66 @@
 
 .tile {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-5);
+  padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   color: var(--color-text);
-  font-size: var(--font-base);
-  font-weight: var(--fw-medium);
   cursor: pointer;
   text-align: left;
-  transition: transform var(--dur-press) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.tileIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--color-primary);
+}
+
+.tileBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tileTitle {
+  font-size: var(--font-base);
+  font-weight: var(--fw-semibold);
+}
+
+.tileDesc {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}
+
+.tileArrow {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--color-text-subtle);
+  transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
 .tile:active {
-  transform: scale(0.98);
-}
-
-.tile svg {
-  color: var(--color-primary);
+  transform: scale(0.99);
 }
 
 @media (hover: hover) {
   .tile:hover {
-    background: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .tile:hover .tileArrow {
+    transform: translateX(3px);
+    color: var(--color-primary);
   }
 }

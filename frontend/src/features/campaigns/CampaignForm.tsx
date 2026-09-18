@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/ui/FormField';
 import { Segmented } from '@/components/ui/Segmented';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
@@ -191,11 +192,12 @@ export function CampaignForm() {
           </div>
         )}
 
-        <h2 className={styles.section}>Delivery &amp; expiration</h2>
-        <p className={styles.help}>
-          After N days = <strong>(order/credit date + days + 1) at the given time</strong>, in the campaign timezone.
-          <strong> Day 0 = next day.</strong> Example: order Oct 11, delivery “after 0 days, 10:00” → credited Oct 12 10:00.
-        </p>
+        <h2 className={styles.section}>
+          Delivery &amp; expiration
+          <Tooltip text="After N days = (order/credit date + days + 1) at the given time, in the campaign timezone. Day 0 = next day (never the same day). Example: order Oct 11, delivery 'after 0 days, 10:00' → credited Oct 12 10:00.">
+            <HelpCircle size={14} />
+          </Tooltip>
+        </h2>
         <div className={styles.grid}>
           <FormField label="Delivery">
             <Segmented
@@ -209,7 +211,7 @@ export function CampaignForm() {
           </FormField>
           {form.deliveryMode === 'AFTER_DAYS' && (
             <>
-              <FormField label="Delivery days" hint="0 = next day">
+              <FormField label="Delivery days">
                 <Input type="number" min={0} value={form.deliveryDays} onChange={(e) => set({ deliveryDays: e.target.value })} />
               </FormField>
               <FormField label="Delivery time">
@@ -231,7 +233,7 @@ export function CampaignForm() {
           </FormField>
           {form.expiryMode === 'AFTER_DAYS' && (
             <>
-              <FormField label="Expiry days" hint="0 = next day">
+              <FormField label="Expiry days">
                 <Input type="number" min={0} value={form.expiryDays} onChange={(e) => set({ expiryDays: e.target.value })} />
               </FormField>
               <FormField label="Expiry time">
