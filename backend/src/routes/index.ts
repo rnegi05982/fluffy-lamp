@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
+import { referenceRouter } from '../modules/reference/reference.routes';
+import { storesRouter } from '../modules/stores/stores.routes';
+import { productsRouter } from '../modules/products/products.routes';
 
 /**
  * Root API router mounted at `/api`. Module routers (stores, reference, campaigns,
@@ -25,3 +28,7 @@ apiRouter.get('/health', (_req, res) => {
     },
   });
 });
+
+apiRouter.use('/reference', referenceRouter);
+apiRouter.use('/stores', storesRouter);
+apiRouter.use('/products', productsRouter);
