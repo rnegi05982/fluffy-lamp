@@ -2,6 +2,8 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Home } from '@/features/home/Home';
+import { Campaigns } from '@/features/campaigns/Campaigns';
+import { CampaignForm } from '@/features/campaigns/CampaignForm';
 import { useStores } from '@/features/stores/useStores';
 import { useAppStore } from '@/store/appStore';
 import styles from './App.module.css';
@@ -32,17 +34,25 @@ const VIEW_LABELS: Record<string, string> = {
 export function App() {
   const currentView = useAppStore((s) => s.currentView);
   const activeStoreId = useAppStore((s) => s.activeStoreId);
+  const navigate = useAppStore((s) => s.navigate);
   const { data } = useStores();
   const activeStore = data?.items.find((s) => s.id === activeStoreId);
 
   return (
     <div className={styles.app}>
       <header className={styles.topbar}>
-        <span className={styles.brand}>Cashback Admin</span>
+        <button className={styles.brand} onClick={() => navigate('home')}>
+          Cashback Admin
+        </button>
         <span className={styles.storeLabel}>{activeStore ? activeStore.name : 'No store selected'}</span>
       </header>
       <main className={styles.main}>
-        {currentView === 'home' ? <Home /> : <ComingSoon label={VIEW_LABELS[currentView] ?? currentView} />}
+        {currentView === 'home' && <Home />}
+        {currentView === 'campaigns' && <Campaigns />}
+        {currentView === 'campaign-form' && <CampaignForm />}
+        {currentView !== 'home' && currentView !== 'campaigns' && currentView !== 'campaign-form' && (
+          <ComingSoon label={VIEW_LABELS[currentView] ?? currentView} />
+        )}
       </main>
     </div>
   );

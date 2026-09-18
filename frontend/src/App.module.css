@@ -20,6 +20,11 @@
 .brand {
   font-weight: var(--fw-semibold);
   font-size: var(--font-lg);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text);
+  cursor: pointer;
 }
 
 .storeLabel {

@@ -62,9 +62,9 @@ export const FACT_CATALOG: FactDefinition[] = [
     key: 'cart.total',
     category: 'CART',
     label: 'Cart Total',
-    description: 'Cart value',
+    description: 'Total cart value (in the campaign currency)',
     operators: [GTE, LTE, EQ],
-    valueKind: 'moneyWithCurrency',
+    valueKind: 'money',
   },
   {
     key: 'cart.currency',
@@ -93,8 +93,8 @@ export const FACT_CATALOG: FactDefinition[] = [
   {
     key: 'product.collections',
     category: 'PRODUCT',
-    label: 'Collections',
-    description: 'From these collections',
+    label: 'Product Collections',
+    description: 'Cart includes items from these collections',
     operators: [IS, IS_NOT],
     valueKind: 'collections',
   },

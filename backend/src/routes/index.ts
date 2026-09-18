@@ -7,6 +7,7 @@ import { productsRouter } from '../modules/products/products.routes';
 import { storeCampaignsRouter, campaignsRouter } from '../modules/campaigns/campaigns.routes';
 import { ordersRouter } from '../modules/orders/orders.routes';
 import { schedulerRouter } from '../modules/scheduler/scheduler.routes';
+import { customersRouter } from '../modules/customers/customers.routes';
 
 /**
  * Root API router mounted at `/api`. Module routers (stores, reference, campaigns,
@@ -38,6 +39,7 @@ apiRouter.use('/fact-catalog', factCatalogRouter);
 apiRouter.use('/stores/:storeId/campaigns', storeCampaignsRouter);
 apiRouter.use('/stores', storesRouter);
 apiRouter.use('/products', productsRouter);
+apiRouter.use('/customers', customersRouter);
 apiRouter.use('/campaigns', campaignsRouter);
 apiRouter.use('/orders', ordersRouter);
 apiRouter.use('/scheduler', schedulerRouter);
