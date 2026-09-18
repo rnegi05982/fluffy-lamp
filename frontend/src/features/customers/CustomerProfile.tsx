@@ -32,11 +32,11 @@ function tabToType(tab: string): string | undefined {
   return undefined;
 }
 
-function whenLabel(tx: LedgerTx, tz: string): string {
-  if (tx.type === 'SCHEDULED') return `Scheduled ${formatInTz(tx.deliverAt, tz)}`;
-  if (tx.type === 'COMPLETED') return `Credited ${formatInTz(tx.deliverAt ?? tx.createdAt, tz)}`;
-  if (tx.type === 'EXPIRED') return `Expired ${formatInTz(tx.createdAt, tz)}`;
-  return `Failed ${formatInTz(tx.createdAt, tz)}`;
+/** The event date for a row's status — no status word (the badge conveys that). */
+function eventDate(tx: LedgerTx, tz: string): string {
+  if (tx.type === 'SCHEDULED') return formatInTz(tx.deliverAt, tz);
+  if (tx.type === 'COMPLETED') return formatInTz(tx.deliverAt ?? tx.createdAt, tz);
+  return formatInTz(tx.createdAt, tz); // EXPIRED / FAILED
 }
 
 export function CustomerProfile() {
@@ -131,7 +131,7 @@ export function CustomerProfile() {
             {isUserView && <th>Store</th>}
             <th>Amount</th>
             <th>Status</th>
-            <th>When</th>
+            <th>Date</th>
             <th>Expires</th>
           </tr>
         </thead>
@@ -159,7 +159,7 @@ export function CustomerProfile() {
                 <td>
                   <Badge tone={TYPE_TONE[tx.type]}>{tx.type[0] + tx.type.slice(1).toLowerCase()}</Badge>
                 </td>
-                <td className={styles.muted}>{whenLabel(tx, viewTz)}</td>
+                <td className={styles.muted}>{eventDate(tx, viewTz)}</td>
                 <td className={styles.muted}>{formatInTz(tx.expiresAt, viewTz)}</td>
               </tr>
             ))

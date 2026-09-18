@@ -10,7 +10,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Segmented } from '@/components/ui/Segmented';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { MultiSelect } from '@/components/ui/MultiSelect';
+import { MultiSelectDropdown } from '@/components/ui/MultiSelectDropdown';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
 import { getApiErrorMessage } from '@/lib/api';
@@ -366,10 +366,11 @@ interface RuleValueInputProps {
 function RuleValueInput({ rule, fact, currency, catalog, products, onChange }: RuleValueInputProps) {
   if (isArrayKind(fact.valueKind)) {
     return (
-      <MultiSelect
+      <MultiSelectDropdown
         options={optionsFor(fact.valueKind, catalog, products)}
         selected={Array.isArray(rule.value) ? rule.value : []}
         onChange={(sel) => onChange({ value: sel })}
+        placeholder="Select values"
       />
     );
   }
