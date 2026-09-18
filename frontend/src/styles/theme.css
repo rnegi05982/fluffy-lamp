@@ -1,0 +1,105 @@
+/* Design tokens — Slate + Indigo, light mode. Components reference var(--token) only. */
+:root {
+  /* Neutrals */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f5f9;
+  --color-border: rgba(15, 23, 42, 0.1);
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-subtle: #94a3b8;
+
+  /* Brand / accent (indigo) */
+  --color-primary: #4f46e5;
+  --color-primary-fg: #ffffff;
+  --color-primary-hover: #4338ca;
+  --color-focus-ring: rgba(79, 70, 229, 0.45);
+
+  /* Semantic (paired bg + fg, WCAG AA) */
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-success-fg: #166534;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-warning-fg: #92400e;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-danger-fg: #991b1b;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+  --color-info-fg: #1e40af;
+
+  /* Domain: campaign phase */
+  --color-phase-active-bg: var(--color-success-bg);
+  --color-phase-active-fg: var(--color-success-fg);
+  --color-phase-scheduled-bg: var(--color-info-bg);
+  --color-phase-scheduled-fg: var(--color-info-fg);
+  --color-phase-expired-bg: #f1f5f9;
+  --color-phase-expired-fg: #475569;
+  --color-phase-disabled-bg: var(--color-warning-bg);
+  --color-phase-disabled-fg: var(--color-warning-fg);
+  --color-phase-archived-bg: #f1f5f9;
+  --color-phase-archived-fg: #94a3b8;
+
+  /* Domain: transaction type */
+  --color-tx-scheduled-bg: var(--color-info-bg);
+  --color-tx-scheduled-fg: var(--color-info-fg);
+  --color-tx-completed-bg: var(--color-success-bg);
+  --color-tx-completed-fg: var(--color-success-fg);
+  --color-tx-expired-bg: #f1f5f9;
+  --color-tx-expired-fg: #475569;
+  --color-tx-failed-bg: var(--color-danger-bg);
+  --color-tx-failed-fg: var(--color-danger-fg);
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-2xs: 11px;
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-base: 16px;
+  --font-lg: 18px;
+  --font-xl: 20px;
+  --font-2xl: 24px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+
+  /* Spacing (4px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.1);
+  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.05);
+
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-modal: 1300;
+  --z-toast: 1400;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-press: 120ms;
+  --dur-fast: 160ms;
+  --dur-base: 200ms;
+  --dur-modal: 240ms;
+}
