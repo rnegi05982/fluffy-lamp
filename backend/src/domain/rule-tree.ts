@@ -10,8 +10,9 @@ export interface Rule {
   /** Fact catalog key, e.g. `cart.total`. */
   fact: string;
   operator: RuleOperator;
-  /** Scalar or array; an array means ANY-of (OR) within this one rule. */
-  value: unknown;
+  /** Scalar or array; an array means ANY-of (OR) within this one rule. Required at runtime
+   *  (enforced by validation); typed optional to match schema inference. */
+  value?: unknown;
   /** Optional per-rule params, e.g. the currency for a money comparison. */
   params?: Record<string, unknown>;
 }
