@@ -1,10 +1,11 @@
 import type { Types } from 'mongoose';
 import type { ICampaign, ITier } from '../../models';
-import { ValueType } from '../../domain/enums';
+import { ValueType, type CampaignPhase } from '../../domain/enums';
 import { utcToZoned } from '../../lib/time/zoned';
 import { toStringValue } from '../../lib/money/decimal';
 
-export type CampaignStatus = 'ACTIVE' | 'SCHEDULED' | 'EXPIRED' | 'DISABLED';
+/** The derived phase plus the presentation-only DISABLED state. */
+export type CampaignStatus = CampaignPhase | 'DISABLED';
 
 export interface CampaignShape extends ICampaign {
   _id: Types.ObjectId;

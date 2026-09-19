@@ -1,7 +1,7 @@
 import type { Types } from 'mongoose';
 import { ScheduledOperation, type IScheduledOperation } from '../../models';
 import { ScheduledOperationStatus } from '../../domain/enums';
-import { buildMeta, type PageMeta, type PaginationQuery } from '../../lib/pagination';
+import { paginate, type PageMeta, type PaginationQuery } from '../../lib/pagination';
 
 interface OpShape extends IScheduledOperation {
   _id: Types.ObjectId;
@@ -50,14 +50,11 @@ export async function listPendingOps(
     },
   };
 
-  const [docs, total] = await Promise.all([
-    ScheduledOperation.find(filter)
-      .sort({ runAt: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean<OpShape[]>(),
-    ScheduledOperation.countDocuments(filter),
-  ]);
+  const { docs, meta } = await paginate<OpShape>(ScheduledOperation, filter, {
+    page,
+    limit,
+    sort: { runAt: 1 },
+  });
 
-  return { items: docs.map(toOpDTO), meta: buildMeta(page, limit, total) };
+  return { items: docs.map(toOpDTO), meta };
 }

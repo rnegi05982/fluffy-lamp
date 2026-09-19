@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { Product, type IProduct } from '../../models';
+import { toMoney } from '../../lib/money/decimal';
 import type { Money } from '../../domain/money';
 
 interface ProductShape extends IProduct {
@@ -36,7 +37,7 @@ function toProductDTO(product: ProductShape): ProductDTO {
     variants: product.variants.map((v) => ({
       variantId: v.variantId,
       name: v.name,
-      price: { amount: v.price.toString(), currency: product.currency },
+      price: toMoney(v.price, product.currency),
     })),
     createdAt: product.createdAt,
   };

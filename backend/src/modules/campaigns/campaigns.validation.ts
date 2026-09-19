@@ -16,9 +16,7 @@ import {
   PRODUCT_TAGS,
   CUSTOMER_TAGS,
 } from '../../rule-engine/facts/options';
-
-const WALL_CLOCK = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
-const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+import { zObjectId, WALL_CLOCK, HH_MM } from '../../lib/validation';
 
 function isNonEmptyStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.length > 0 && v.every((x) => typeof x === 'string');
@@ -49,7 +47,6 @@ function requireArrayMembers(
 function validateValueShape(
   def: FactDefinition,
   value: unknown,
-  params: Record<string, unknown> | undefined,
   ctx: z.RefinementCtx,
 ): void {
   switch (def.valueKind) {
@@ -88,14 +85,6 @@ function validateValueShape(
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Expected a non-negative amount', path: ['value'] });
       }
       break;
-    case 'moneyWithCurrency':
-      if (!isNumeric(value) || Number(value) < 0) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Expected a non-negative amount', path: ['value'] });
-      }
-      if (typeof params?.currency !== 'string' || !CURRENCY_CODES.includes(params.currency)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A valid currency is required', path: ['params', 'currency'] });
-      }
-      break;
   }
 }
 
@@ -120,7 +109,7 @@ const ruleLeafSchema = z
         path: ['operator'],
       });
     }
-    validateValueShape(def, rule.value, rule.params, ctx);
+    validateValueShape(def, rule.value, ctx);
   });
 
 const ruleGroupSchema: z.ZodType<RuleGroup> = z.lazy(() =>
@@ -190,11 +179,11 @@ export const campaignBodySchema = z
 export type CampaignBodyInput = z.infer<typeof campaignBodySchema>;
 
 export const storeIdParamsSchema = z.object({
-  storeId: z.string().refine((v) => isValidObjectId(v), 'Invalid store id'),
+  storeId: zObjectId('Invalid store id'),
 });
 export type StoreIdParams = z.infer<typeof storeIdParamsSchema>;
 
 export const campaignIdParamsSchema = z.object({
-  id: z.string().refine((v) => isValidObjectId(v), 'Invalid campaign id'),
+  id: zObjectId('Invalid campaign id'),
 });
 export type CampaignIdParams = z.infer<typeof campaignIdParamsSchema>;

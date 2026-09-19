@@ -6,13 +6,11 @@ export type FactCategory = 'CUSTOMER' | 'CART' | 'PRODUCT';
  * How a fact's value is entered/validated:
  * - customerTags/collections/productTags/productTypes/currency/products/variants: array of ids/codes (ANY-of)
  * - money: an amount in the campaign currency
- * - moneyWithCurrency: an amount plus its own currency (params.currency)
  * - number: a plain number
  */
 export type FactValueKind =
   | 'customerTags'
   | 'money'
-  | 'moneyWithCurrency'
   | 'number'
   | 'currency'
   | 'products'

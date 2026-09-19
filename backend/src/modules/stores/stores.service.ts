@@ -1,8 +1,9 @@
 import { Types } from 'mongoose';
 import { Store, type IStore } from '../../models';
 import { ApiError } from '../../lib/ApiError';
+import { findByIdOr404 } from '../../lib/db';
 import { isDuplicateKeyError } from '../../lib/mongoErrors';
-import { buildMeta, escapeRegex, type PageMeta, type PaginationQuery } from '../../lib/pagination';
+import { escapeRegex, paginate, type PageMeta, type PaginationQuery } from '../../lib/pagination';
 import type { CreateStoreInput } from './stores.validation';
 
 interface StoreShape extends IStore {
@@ -37,22 +38,18 @@ export async function listStores(
     ? { name: { $regex: escapeRegex(search), $options: 'i' } }
     : {};
 
-  const [docs, total] = await Promise.all([
-    Store.find(filter)
-      .collation({ locale: 'en', strength: 2 })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean<StoreShape[]>(),
-    Store.countDocuments(filter),
-  ]);
+  const { docs, meta } = await paginate<StoreShape>(Store, filter, {
+    page,
+    limit,
+    sort: { createdAt: -1 },
+    collation: { locale: 'en', strength: 2 },
+  });
 
-  return { items: docs.map(toStoreDTO), meta: buildMeta(page, limit, total) };
+  return { items: docs.map(toStoreDTO), meta };
 }
 
 export async function getStore(id: string): Promise<StoreDTO> {
-  const store = await Store.findById(id).lean<StoreShape | null>();
-  if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
+  const store = await findByIdOr404<StoreShape>(Store, id, 'STORE_NOT_FOUND', 'Store not found');
   return toStoreDTO(store);
 }
 

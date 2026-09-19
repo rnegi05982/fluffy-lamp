@@ -16,6 +16,7 @@ import {
   ScheduledOperationType,
 } from '../domain/enums';
 import { ApiError } from '../lib/ApiError';
+import { logger } from '../lib/logger';
 import { toStringValue, toCents } from '../lib/money/decimal';
 import { FX_RATES, BASE_CURRENCY } from '../modules/reference/reference.data';
 import { buildContext } from '../rule-engine/context';
@@ -152,29 +153,40 @@ export async function processCashback(order: ProcessOrderInput): Promise<Cashbac
     expiresAt,
   });
 
-  // 2. Balance cache: delivered now, or pending until delivery.
-  await CustomerStoreAccount.findOneAndUpdate(
-    { customerId, storeId },
-    { $inc: isImmediate ? { balanceBase: payout.baseAmount } : { pendingBase: payout.baseAmount } },
-    { upsert: true, new: true },
-  );
-  if (isImmediate) {
-    await Customer.findByIdAndUpdate(customerId, { $inc: { globalBalanceBase: payout.baseAmount } });
-  }
+  // Steps 2-3 update caches derived from the ledger. If either fails after the ledger write
+  // the caches diverge (and a delayed credit would have no scheduled op), so log the ledger
+  // id for reconciliation before surfacing the failure.
+  try {
+    // 2. Balance cache: delivered now, or pending until delivery.
+    await CustomerStoreAccount.findOneAndUpdate(
+      { customerId, storeId },
+      { $inc: isImmediate ? { balanceBase: payout.baseAmount } : { pendingBase: payout.baseAmount } },
+      { upsert: true, new: true },
+    );
+    if (isImmediate) {
+      await Customer.findByIdAndUpdate(customerId, { $inc: { globalBalanceBase: payout.baseAmount } });
+    }
 
-  // 3. Schedule the delayed delivery, or the expiry of an immediate credit.
-  if (!isImmediate) {
-    await ScheduledOperation.create({
-      type: ScheduledOperationType.DELIVER_CASHBACK,
-      runAt: deliverAt,
-      transactionId: tx._id,
+    // 3. Schedule the delayed delivery, or the expiry of an immediate credit.
+    if (!isImmediate) {
+      await ScheduledOperation.create({
+        type: ScheduledOperationType.DELIVER_CASHBACK,
+        runAt: deliverAt,
+        transactionId: tx._id,
+      });
+    } else if (expiresAt) {
+      await ScheduledOperation.create({
+        type: ScheduledOperationType.EXPIRE_CASHBACK,
+        runAt: expiresAt,
+        transactionId: tx._id,
+      });
+    }
+  } catch (err) {
+    logger.error('Cashback writes after the ledger entry failed; ledger entry needs reconciliation', {
+      transactionId: tx._id.toString(),
+      error: err instanceof Error ? err.message : String(err),
     });
-  } else if (expiresAt) {
-    await ScheduledOperation.create({
-      type: ScheduledOperationType.EXPIRE_CASHBACK,
-      runAt: expiresAt,
-      transactionId: tx._id,
-    });
+    throw err;
   }
 
   return {

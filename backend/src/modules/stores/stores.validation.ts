@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { isValidObjectId } from 'mongoose';
 import { CURRENCY_CODES, TIMEZONES } from '../reference/reference.data';
+import { zObjectId } from '../../lib/validation';
 
 export const createStoreSchema = z.object({
   name: z.string().trim().min(1, 'Store name is required'),
@@ -10,6 +10,6 @@ export const createStoreSchema = z.object({
 export type CreateStoreInput = z.infer<typeof createStoreSchema>;
 
 export const storeIdParamsSchema = z.object({
-  id: z.string().refine((v) => isValidObjectId(v), 'Invalid store id'),
+  id: zObjectId('Invalid store id'),
 });
 export type StoreIdParams = z.infer<typeof storeIdParamsSchema>;

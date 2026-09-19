@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { isValidObjectId } from 'mongoose';
 import { CURRENCY_CODES, TIMEZONES } from '../reference/reference.data';
+import { zObjectId, WALL_CLOCK } from '../../lib/validation';
 
-const objectId = z.string().refine((v) => isValidObjectId(v), 'Invalid id');
-const WALL_CLOCK = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+const objectId = zObjectId('Invalid id');
 
 export const processOrderSchema = z.object({
   storeId: objectId,

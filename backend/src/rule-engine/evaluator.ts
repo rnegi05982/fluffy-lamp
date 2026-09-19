@@ -42,16 +42,21 @@ function evaluateRule(rule: Rule, ctx: EvalContext, opts: EvaluationOptions): bo
   let left: number;
   let right: number;
 
-  if (def.valueKind === 'number') {
-    left = ctx.numbers[rule.fact] ?? 0;
-    right = Number(rule.value);
-  } else {
-    const money = ctx.money[rule.fact];
-    if (!money) return false;
-    const valueCurrency =
-      typeof rule.params?.currency === 'string' ? rule.params.currency : opts.campaignCurrency;
-    left = toCents(convertToBase(money.amount, money.currency, opts.rateTable));
-    right = toCents(convertToBase(String(rule.value), valueCurrency, opts.rateTable));
+  switch (def.valueKind) {
+    case 'number':
+      left = ctx.numbers[rule.fact] ?? 0;
+      right = Number(rule.value);
+      break;
+    case 'money': {
+      const money = ctx.money[rule.fact];
+      if (!money) return false;
+      // Money rule values are entered in the campaign currency.
+      left = toCents(convertToBase(money.amount, money.currency, opts.rateTable));
+      right = toCents(convertToBase(String(rule.value), opts.campaignCurrency, opts.rateTable));
+      break;
+    }
+    default:
+      return false;
   }
 
   if (!Number.isFinite(right)) return false;

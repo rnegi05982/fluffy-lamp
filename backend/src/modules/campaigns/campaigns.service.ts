@@ -1,7 +1,8 @@
 import { Types } from 'mongoose';
 import { Campaign, Store, type ITier } from '../../models';
 import { ApiError } from '../../lib/ApiError';
-import { buildMeta, escapeRegex, type PageMeta, type PaginationQuery } from '../../lib/pagination';
+import { findByIdOr404 } from '../../lib/db';
+import { escapeRegex, paginate, type PageMeta, type PaginationQuery } from '../../lib/pagination';
 import { zonedToUtc } from '../../lib/time/zoned';
 import { toDecimal128 } from '../../lib/money/decimal';
 import { ValueType } from '../../domain/enums';
@@ -44,8 +45,12 @@ function toCampaignFields(input: CampaignBodyInput) {
 }
 
 async function getStoreCurrencyOr404(storeId: Types.ObjectId | string): Promise<string> {
-  const store = await Store.findById(storeId).lean<{ currency: string } | null>();
-  if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
+  const store = await findByIdOr404<{ currency: string }>(
+    Store,
+    storeId,
+    'STORE_NOT_FOUND',
+    'Store not found',
+  );
   return store.currency;
 }
 
@@ -62,19 +67,16 @@ export async function listCampaigns(
   };
   if (search) filter.campaignName = { $regex: escapeRegex(search), $options: 'i' };
 
-  const [docs, total] = await Promise.all([
-    Campaign.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean<CampaignShape[]>(),
-    Campaign.countDocuments(filter),
-  ]);
+  const { docs, meta } = await paginate<CampaignShape>(Campaign, filter, {
+    page,
+    limit,
+    sort: { createdAt: -1 },
+  });
 
   const now = new Date();
   return {
     items: docs.map((d) => toCampaignListItemDTO(d, storeCurrency, now)),
-    meta: buildMeta(page, limit, total),
+    meta,
   };
 }
 
@@ -84,14 +86,17 @@ export async function createCampaign(storeId: string, input: CampaignBodyInput) 
     storeId: new Types.ObjectId(storeId),
     ...toCampaignFields(input),
   });
-  const doc = await Campaign.findById(created._id).lean<CampaignShape>();
-  if (!doc) throw ApiError.notFound('CAMPAIGN_NOT_FOUND', 'Campaign not found');
+  const doc = await findByIdOr404<CampaignShape>(
+    Campaign,
+    created._id,
+    'CAMPAIGN_NOT_FOUND',
+    'Campaign not found',
+  );
   return toCampaignDTO(doc, storeCurrency, new Date());
 }
 
 export async function getCampaign(id: string) {
-  const doc = await Campaign.findById(id).lean<CampaignShape | null>();
-  if (!doc) throw ApiError.notFound('CAMPAIGN_NOT_FOUND', 'Campaign not found');
+  const doc = await findByIdOr404<CampaignShape>(Campaign, id, 'CAMPAIGN_NOT_FOUND', 'Campaign not found');
   const store = await Store.findById(doc.storeId).lean<{ currency: string } | null>();
   return toCampaignDTO(doc, store?.currency ?? doc.currency ?? BASE_CURRENCY, new Date());
 }

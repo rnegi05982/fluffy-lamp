@@ -6,21 +6,65 @@ import {
   Transaction,
   Campaign,
 } from '../../models';
-import { ApiError } from '../../lib/ApiError';
-import { toStringValue } from '../../lib/money/decimal';
+import { findByIdOr404 } from '../../lib/db';
+import { toMoney, toStringValue } from '../../lib/money/decimal';
 import { convertFromBase } from '../../lib/money/fx';
 import { FX_RATES } from '../reference/reference.data';
-import { buildMeta, type PageMeta } from '../../lib/pagination';
+import { paginate, type PageMeta } from '../../lib/pagination';
 import type { Money } from '../../domain/money';
 import type { BalanceQuery, TransactionsQuery } from './customers.validation';
 
-function money(baseAmount: Types.Decimal128 | string, currency: string): Money {
+export interface CustomerIdentityDTO {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  tags: string[];
+}
+
+export interface CustomerListRowDTO extends CustomerIdentityDTO {
+  storeBalance: Money;
+  storeCurrency: string;
+  lastCreditedAt: Date | null;
+}
+
+export interface CustomerDetailDTO extends CustomerIdentityDTO {
+  currency: string;
+  timezone: string;
+}
+
+export interface BalanceDTO {
+  view: 'store' | 'user';
+  currency: string;
+  timezone: string;
+  balance: Money;
+  pending: Money;
+}
+
+export interface TransactionDTO {
+  id: string;
+  type: string;
+  campaignId: string | null;
+  campaignName: string | null;
+  storeId?: string;
+  storeName?: string | null;
+  amount: Money;
+  originalAmount: Money;
+  deliverAt: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+}
+
+/** Convert a base-currency amount into the given display currency as Money. */
+function displayMoney(baseAmount: Types.Decimal128 | string, currency: string): Money {
   return { amount: toStringValue(convertFromBase(baseAmount, currency, FX_RATES)), currency };
 }
 
 // ---- list ------------------------------------------------------------------
 
-export async function listCustomers(storeId?: string): Promise<unknown[]> {
+export async function listCustomers(
+  storeId?: string,
+): Promise<CustomerIdentityDTO[] | CustomerListRowDTO[]> {
   const customers = await Customer.find()
     .sort({ firstName: 1, lastName: 1 })
     .lean<
@@ -33,18 +77,22 @@ export async function listCustomers(storeId?: string): Promise<unknown[]> {
       }>
     >();
 
-  if (!storeId) {
-    return customers.map((c) => ({
-      id: c._id.toString(),
-      firstName: c.firstName,
-      lastName: c.lastName,
-      email: c.email,
-      tags: c.tags,
-    }));
-  }
+  const toIdentity = (c: (typeof customers)[number]): CustomerIdentityDTO => ({
+    id: c._id.toString(),
+    firstName: c.firstName,
+    lastName: c.lastName,
+    email: c.email,
+    tags: c.tags,
+  });
 
-  const store = await Store.findById(storeId).lean<{ currency: string } | null>();
-  if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
+  if (!storeId) return customers.map(toIdentity);
+
+  const store = await findByIdOr404<{ currency: string }>(
+    Store,
+    storeId,
+    'STORE_NOT_FOUND',
+    'Store not found',
+  );
 
   const storeObjId = new Types.ObjectId(storeId);
   const [accounts, lastCredits] = await Promise.all([
@@ -60,25 +108,18 @@ export async function listCustomers(storeId?: string): Promise<unknown[]> {
   const balanceByCustomer = new Map(accounts.map((a) => [a.customerId.toString(), a.balanceBase]));
   const lastByCustomer = new Map(lastCredits.map((r) => [r._id.toString(), r.last]));
 
-  return customers.map((c) => {
-    const id = c._id.toString();
-    return {
-      id,
-      firstName: c.firstName,
-      lastName: c.lastName,
-      email: c.email,
-      tags: c.tags,
-      storeBalance: money(balanceByCustomer.get(id) ?? '0', store.currency),
-      storeCurrency: store.currency,
-      lastCreditedAt: lastByCustomer.get(id) ?? null,
-    };
-  });
+  return customers.map((c) => ({
+    ...toIdentity(c),
+    storeBalance: displayMoney(balanceByCustomer.get(c._id.toString()) ?? '0', store.currency),
+    storeCurrency: store.currency,
+    lastCreditedAt: lastByCustomer.get(c._id.toString()) ?? null,
+  }));
 }
 
 // ---- detail ----------------------------------------------------------------
 
-export async function getCustomer(id: string): Promise<unknown> {
-  const c = await Customer.findById(id).lean<{
+export async function getCustomer(id: string): Promise<CustomerDetailDTO> {
+  const c = await findByIdOr404<{
     _id: Types.ObjectId;
     firstName: string;
     lastName: string;
@@ -86,8 +127,7 @@ export async function getCustomer(id: string): Promise<unknown> {
     tags: string[];
     currency: string;
     timezone: string;
-  } | null>();
-  if (!c) throw ApiError.notFound('CUSTOMER_NOT_FOUND', 'Customer not found');
+  }>(Customer, id, 'CUSTOMER_NOT_FOUND', 'Customer not found');
   return {
     id: c._id.toString(),
     firstName: c.firstName,
@@ -101,22 +141,22 @@ export async function getCustomer(id: string): Promise<unknown> {
 
 // ---- balance ---------------------------------------------------------------
 
-export async function getBalance(id: string, query: BalanceQuery): Promise<unknown> {
-  const customer = await Customer.findById(id).lean<{
+export async function getBalance(id: string, query: BalanceQuery): Promise<BalanceDTO> {
+  const customer = await findByIdOr404<{
     globalBalanceBase: Types.Decimal128;
     currency: string;
     timezone: string;
-  } | null>();
-  if (!customer) throw ApiError.notFound('CUSTOMER_NOT_FOUND', 'Customer not found');
+  }>(Customer, id, 'CUSTOMER_NOT_FOUND', 'Customer not found');
 
   const customerId = new Types.ObjectId(id);
 
   if (query.storeId) {
-    const store = await Store.findById(query.storeId).lean<{
-      currency: string;
-      timezone: string;
-    } | null>();
-    if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
+    const store = await findByIdOr404<{ currency: string; timezone: string }>(
+      Store,
+      query.storeId,
+      'STORE_NOT_FOUND',
+      'Store not found',
+    );
     const account = await CustomerStoreAccount.findOne({
       customerId,
       storeId: new Types.ObjectId(query.storeId),
@@ -125,8 +165,8 @@ export async function getBalance(id: string, query: BalanceQuery): Promise<unkno
       view: 'store',
       currency: store.currency,
       timezone: store.timezone,
-      balance: money(account?.balanceBase ?? '0', store.currency),
-      pending: money(account?.pendingBase ?? '0', store.currency),
+      balance: displayMoney(account?.balanceBase ?? '0', store.currency),
+      pending: displayMoney(account?.pendingBase ?? '0', store.currency),
     };
   }
 
@@ -138,8 +178,8 @@ export async function getBalance(id: string, query: BalanceQuery): Promise<unkno
     view: 'user',
     currency: customer.currency,
     timezone: customer.timezone,
-    balance: money(customer.globalBalanceBase, customer.currency),
-    pending: money(pendingAgg?.pending ?? '0', customer.currency),
+    balance: displayMoney(customer.globalBalanceBase, customer.currency),
+    pending: displayMoney(pendingAgg?.pending ?? '0', customer.currency),
   };
 }
 
@@ -161,16 +201,24 @@ interface TxShape {
 export async function getTransactions(
   id: string,
   query: TransactionsQuery,
-): Promise<{ items: unknown[]; meta: PageMeta }> {
+): Promise<{ items: TransactionDTO[]; meta: PageMeta }> {
   const { storeId, type, page, limit } = query;
 
-  const customer = await Customer.findById(id).lean<{ currency: string } | null>();
-  if (!customer) throw ApiError.notFound('CUSTOMER_NOT_FOUND', 'Customer not found');
+  const customer = await findByIdOr404<{ currency: string }>(
+    Customer,
+    id,
+    'CUSTOMER_NOT_FOUND',
+    'Customer not found',
+  );
 
   let viewCurrency = customer.currency;
   if (storeId) {
-    const store = await Store.findById(storeId).lean<{ currency: string } | null>();
-    if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
+    const store = await findByIdOr404<{ currency: string }>(
+      Store,
+      storeId,
+      'STORE_NOT_FOUND',
+      'Store not found',
+    );
     viewCurrency = store.currency;
   }
 
@@ -178,14 +226,11 @@ export async function getTransactions(
   if (storeId) filter.storeId = new Types.ObjectId(storeId);
   if (type) filter.type = type;
 
-  const [docs, total] = await Promise.all([
-    Transaction.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean<TxShape[]>(),
-    Transaction.countDocuments(filter),
-  ]);
+  const { docs, meta } = await paginate<TxShape>(Transaction, filter, {
+    page,
+    limit,
+    sort: { createdAt: -1 },
+  });
 
   // Resolve campaign names (and store names for the global view) for this page.
   const campaignIds = [...new Set(docs.filter((d) => d.campaignId).map((d) => String(d.campaignId)))];
@@ -211,12 +256,12 @@ export async function getTransactions(
     ...(storeId
       ? {}
       : { storeId: d.storeId.toString(), storeName: storeName.get(d.storeId.toString()) ?? null }),
-    amount: money(d.baseAmount, viewCurrency),
-    originalAmount: { amount: d.originalAmount.toString(), currency: d.originalCurrency },
+    amount: displayMoney(d.baseAmount, viewCurrency),
+    originalAmount: toMoney(d.originalAmount, d.originalCurrency),
     deliverAt: d.deliverAt,
     expiresAt: d.expiresAt,
     createdAt: d.createdAt,
   }));
 
-  return { items, meta: buildMeta(page, limit, total) };
+  return { items, meta };
 }

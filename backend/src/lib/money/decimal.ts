@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import type { Money } from '../../domain/money';
 
 /**
  * Money helpers. Amounts are stored as Decimal128 and never held as floats. Arithmetic is
@@ -42,4 +43,9 @@ export function compare(a: DecimalInput, b: DecimalInput): -1 | 0 | 1 {
 /** Canonical 2-decimal string for serialization. */
 export function toStringValue(value: DecimalInput): string {
   return fromCents(toCents(value)).toString();
+}
+
+/** Pair a Decimal amount with its currency as a serializable Money value. */
+export function toMoney(value: DecimalInput, currency: string): Money {
+  return { amount: toStringValue(value), currency };
 }
