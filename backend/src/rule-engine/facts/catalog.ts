@@ -44,7 +44,7 @@ export const FACT_CATALOG: FactDefinition[] = [
     key: 'customer.lifetimeSpent',
     category: 'CUSTOMER',
     label: 'Customer Lifetime Spent',
-    description: 'Total amount the customer has spent',
+    description: 'Total amount the customer has spent, including the current order',
     operators: [GTE, LTE, EQ],
     valueKind: 'money',
   },

@@ -2,7 +2,7 @@ import type { Money } from '../../../domain/money';
 
 /**
  * Customer facts from the DB: global tags and the per-store lifetime spend (already in base
- * currency, reflecting past orders only).
+ * currency, including the current order).
  */
 export function customerFacts(
   tags: string[],

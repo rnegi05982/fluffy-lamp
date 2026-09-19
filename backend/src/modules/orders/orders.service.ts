@@ -86,7 +86,8 @@ export async function processOrder(input: ProcessOrderRequest): Promise<ProcessO
     };
   }
 
-  // 3. Accumulate lifetime spend (after cashback, so eligibility saw pre-order spend).
+  // 3. Accumulate lifetime spend. Eligibility already added this order in-memory, so the
+  //    increment must stay here (after cashback) to avoid double-counting it.
   const orderBase = convertToBase(orderAmount, input.orderCurrency, FX_RATES);
   await CustomerStoreAccount.findOneAndUpdate(
     { customerId: new Types.ObjectId(input.customerId), storeId: new Types.ObjectId(input.storeId) },
