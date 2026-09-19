@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import type { Money } from '@/lib/format';
 
 export interface ProductVariant {
   variantId: string;
   name: string;
-  price: { amount: string; currency: string };
+  price: Money;
 }
 
 export interface Product {

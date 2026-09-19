@@ -1,10 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-
-export interface Money {
-  amount: string;
-  currency: string;
-}
+import type { Money } from '@/lib/format';
 
 export interface CustomerListRow {
   id: string;

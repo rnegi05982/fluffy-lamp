@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
 import { getApiErrorMessage } from '@/lib/api';
-import { useReference } from '@/features/reference/useReference';
+import { useReference, toCurrencyOptions, toTimezoneOptions } from '@/features/reference/useReference';
 import { useProducts } from '@/features/products/useProducts';
 import { useCustomers } from '@/features/customers/useCustomers';
 import { useStores } from '@/features/stores/useStores';
@@ -148,8 +148,8 @@ export function OrderForm() {
     label: `${c.firstName} ${c.lastName} — ${c.email}${c.tags.length ? ` (${c.tags.join(', ')})` : ''}`,
   }));
   const productOptions = products.map((p) => ({ value: p.id, label: p.name }));
-  const currencyOptions = reference.currencies.map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` }));
-  const tzOptions = reference.timezones.map((t) => ({ value: t, label: t }));
+  const currencyOptions = toCurrencyOptions(reference);
+  const tzOptions = toTimezoneOptions(reference);
 
   return (
     <form className={styles.page} onSubmit={submit}>

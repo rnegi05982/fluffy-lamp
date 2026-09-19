@@ -13,6 +13,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
 import { getApiErrorMessage } from '@/lib/api';
+import { formatLocal } from '@/lib/format';
 import { useCampaigns, useDeleteCampaign } from './useCampaigns';
 import type { CampaignListItem, CampaignStatus } from './types';
 import styles from './Campaigns.module.css';
@@ -29,17 +30,6 @@ const STATUS_LABEL: Record<CampaignStatus, string> = {
   EXPIRED: 'Expired',
   DISABLED: 'Disabled',
 };
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** Format a campaign-tz wall-clock ('YYYY-MM-DDTHH:mm:ss') without re-applying a timezone. */
-function formatLocal(s: string | null): string {
-  if (!s) return '—';
-  const [date, time] = s.split('T');
-  const [y, m, d] = (date ?? '').split('-');
-  const month = MONTHS[Number(m) - 1] ?? m;
-  return `${Number(d)} ${month} ${y}, ${(time ?? '').slice(0, 5)}`;
-}
 
 function formatSchedule(c: CampaignListItem): string {
   if (!c.startAt && !c.endAt) return 'Continuous';

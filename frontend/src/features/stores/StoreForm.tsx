@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { useReference } from '@/features/reference/useReference';
+import { useReference, toCurrencyOptions, toTimezoneOptions } from '@/features/reference/useReference';
 import { useAppStore } from '@/store/appStore';
 import { ApiError, getApiErrorMessage } from '@/lib/api';
 import { useCreateStore } from './useStores';
@@ -21,8 +21,8 @@ export function StoreForm({ onDone }: { onDone: () => void }) {
   const [currency, setCurrency] = useState('');
   const [nameError, setNameError] = useState<string | undefined>();
 
-  const currencyOptions = reference?.currencies.map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` })) ?? [];
-  const tzOptions = reference?.timezones.map((t) => ({ value: t, label: t })) ?? [];
+  const currencyOptions = toCurrencyOptions(reference);
+  const tzOptions = toTimezoneOptions(reference);
   const canSubmit = name.trim() !== '' && timezone !== '' && currency !== '';
 
   const submit = (e: FormEvent<HTMLFormElement>) => {

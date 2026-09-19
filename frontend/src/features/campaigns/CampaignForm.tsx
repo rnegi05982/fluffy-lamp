@@ -14,7 +14,7 @@ import { MultiSelectDropdown } from '@/components/ui/MultiSelectDropdown';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
 import { getApiErrorMessage } from '@/lib/api';
-import { useReference } from '@/features/reference/useReference';
+import { useReference, toCurrencyOptions, toTimezoneOptions } from '@/features/reference/useReference';
 import { useFactCatalog, type FactDefinition } from '@/features/reference/useFactCatalog';
 import { useProducts } from '@/features/products/useProducts';
 import { useStores } from '@/features/stores/useStores';
@@ -90,8 +90,8 @@ export function CampaignForm() {
     );
   }
 
-  const currencyOptions = reference.currencies.map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` }));
-  const tzOptions = reference.timezones.map((t) => ({ value: t, label: t }));
+  const currencyOptions = toCurrencyOptions(reference);
+  const tzOptions = toTimezoneOptions(reference);
   const firstFact = catalog.facts[0] as FactDefinition;
 
   const set = (patch: Partial<FormState>) => setForm((f) => (f ? { ...f, ...patch } : f));

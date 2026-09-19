@@ -13,3 +13,13 @@ export function useReference() {
     staleTime: Infinity,
   });
 }
+
+/** Build currency dropdown options ("USD — US Dollar") from reference data. */
+export function toCurrencyOptions(ref: Reference | undefined): { value: string; label: string }[] {
+  return (ref?.currencies ?? []).map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` }));
+}
+
+/** Build timezone dropdown options from reference data. */
+export function toTimezoneOptions(ref: Reference | undefined): { value: string; label: string }[] {
+  return (ref?.timezones ?? []).map((t) => ({ value: t, label: t }));
+}
