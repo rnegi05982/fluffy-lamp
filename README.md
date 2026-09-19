@@ -10,11 +10,20 @@ timezone-aware scheduler for delayed delivery and expiry.
 
 ## Tech stack
 
-**Backend** — Node.js, Express 5, TypeScript (CommonJS), Mongoose (MongoDB), Zod for
+**Backend** — Node.js, Express 5, TypeScript , Mongoose (MongoDB), Zod for
 validation, dayjs for timezone math, node-cron for the in-process scheduler heartbeat.
 
 **Frontend** — Vite, React 19, TypeScript, CSS Modules, TanStack Query (server state),
 Zustand (client state), lucide-react (icons), sonner (toasts).
+
+---
+
+## Schema
+
+![Cashback Rewards System — data model](docs/schema.png)
+
+Entity-relationship diagram of the 8 MongoDB collections; tiers and the rule tree are
+embedded within `campaigns`.
 
 ---
 

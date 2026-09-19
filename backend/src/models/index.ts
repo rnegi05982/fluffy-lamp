@@ -12,4 +12,3 @@ export {
   ScheduledOperation,
   type IScheduledOperation,
 } from './scheduledOperation.model';
-export { FxRates, type IFxRates } from './fxRates.model';
