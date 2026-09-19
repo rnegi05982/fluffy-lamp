@@ -125,8 +125,9 @@ export async function processCashback(order: ProcessOrderInput): Promise<Cashbac
   const { campaign, tier, payout } = candidates[0] as Candidate;
   const isImmediate = campaign.deliveryMode === DeliveryMode.IMMEDIATE;
 
+  // Immediate credits are delivered as of the order's placed-at instant.
   const deliverAt = isImmediate
-    ? null
+    ? order.orderCreatedAt
     : scheduleAt(order.orderCreatedAt, campaign.deliveryDays ?? 0, campaign.deliveryTime ?? '00:00', campaign.timezone);
 
   // For immediate credits expiry is measured from now; for delayed it is set at delivery time.
