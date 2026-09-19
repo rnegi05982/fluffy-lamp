@@ -6,9 +6,6 @@ timezone-aware scheduler for delayed delivery and expiry.
 
 **Live demo:** https://fluffy-lamp-peach.vercel.app/
 
-> The frontend is deployed on Vercel and talks to the backend API (deployed on Render)
-> via the `VITE_API_URL` environment variable.
-
 ---
 
 ## Tech stack
@@ -18,34 +15,6 @@ validation, dayjs for timezone math, node-cron for the in-process scheduler hear
 
 **Frontend** — Vite, React 19, TypeScript, CSS Modules, TanStack Query (server state),
 Zustand (client state), lucide-react (icons), sonner (toasts).
-
----
-
-## Features
-
-- **Store management** — create and select stores; store context (currency, timezone)
-  carries through the app.
-- **Campaign management** — full CRUD for cashback campaigns with a rule-tree eligibility
-  editor (customer, cart, and product facts combined via AND/OR groups) and tiered payouts.
-- **Order processing** — the cashback engine evaluates live campaigns against an order,
-  selects the best payout, freezes the amount + FX rate, and writes a ledger transaction.
-- **Immediate & delayed cashback** — credit now, or schedule delivery after N days at a
-  fixed time-of-day in the campaign timezone.
-- **Expiry** — scheduled reversal of a delivered credit after N days.
-- **Customer profiles** — balances plus a filterable transaction ledger.
-- **Scheduler** — durable job queue (`scheduled_operations`) with claim-then-act,
-  idempotent handlers, bounded retry with backoff, and crash recovery.
-- **Money handling** — stored as `Decimal128`, computed in integer minor units, normalized
-  to a base currency, serialized as strings (never floats).
-
----
-
-## Repository structure
-
-```
-backend/    Express + Mongoose API, rule engine, cashback engine, scheduler
-frontend/   Vite + React admin dashboard
-```
 
 ---
 
@@ -68,17 +37,11 @@ frontend/   Vite + React admin dashboard
 | `CORS_ORIGIN`   | no       | `http://localhost:5173` | Allowed origin(s); comma-separated for multiple. |
 | `NODE_ENV`      | no       | `development`           | `development` \| `test` \| `production`.         |
 
-> In production, set `CORS_ORIGIN` to the deployed frontend origin
-> (e.g. `https://fluffy-lamp-peach.vercel.app`) — exact scheme + host, no trailing slash.
-
 ### Frontend (`frontend/.env`)
 
 | Variable       | Required | Default                     | Description                  |
 | -------------- | -------- | --------------------------- | ---------------------------- |
 | `VITE_API_URL` | no       | `http://localhost:4000/api` | Base URL of the backend API. |
-
-> In production, set `VITE_API_URL` to the deployed backend, e.g.
-> `https://<your-render-backend>.onrender.com/api`.
 
 ---
 
@@ -166,6 +129,5 @@ serialized as a string with its currency.
 ## Scheduler
 
 Delayed delivery and expiry are persisted as `scheduled_operations` and processed by a
-worker (`runTick`). Locally, an in-process `node-cron` heartbeat can drive it (see
-`server.ts`); it is currently commented out, so drive ticks with `POST /api/scheduler/tick`
-(or a hosted cron, e.g. a MongoDB Atlas Scheduled Trigger, calling that endpoint).
+worker (`runTick`). The in-process `node-cron` heartbeat (see `server.ts`) is currently
+commented out, so drive ticks with `POST /api/scheduler/tick`.
