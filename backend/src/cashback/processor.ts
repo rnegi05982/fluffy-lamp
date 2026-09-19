@@ -75,7 +75,6 @@ export async function processCashback(order: ProcessOrderInput): Promise<Cashbac
   if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
 
   const ctx = await buildContext(order);
-  const now = new Date();
   const placedAt = order.orderCreatedAt.getTime();
 
   const campaigns = await Campaign.find({
@@ -130,10 +129,11 @@ export async function processCashback(order: ProcessOrderInput): Promise<Cashbac
     ? order.orderCreatedAt
     : scheduleAt(order.orderCreatedAt, campaign.deliveryDays ?? 0, campaign.deliveryTime ?? '00:00', campaign.timezone);
 
-  // For immediate credits expiry is measured from now; for delayed it is set at delivery time.
+  // Immediate credits expire measured from their delivery instant (the order's placed-at);
+  // for delayed credits expiry is set at delivery time.
   const expiresAt =
     isImmediate && campaign.expiryMode === ExpiryMode.AFTER_DAYS
-      ? scheduleAt(now, campaign.expiryDays ?? 0, campaign.expiryTime ?? '00:00', campaign.timezone)
+      ? scheduleAt(deliverAt, campaign.expiryDays ?? 0, campaign.expiryTime ?? '00:00', campaign.timezone)
       : null;
 
   const customerId = new Types.ObjectId(order.customerId);

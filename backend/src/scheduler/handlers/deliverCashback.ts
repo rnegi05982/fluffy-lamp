@@ -26,6 +26,7 @@ export async function deliverCashback(transactionId: Types.ObjectId): Promise<vo
     storeId: Types.ObjectId;
     campaignId: Types.ObjectId | null;
     baseAmount: Types.Decimal128;
+    deliverAt: Date | null;
   } | null>();
 
   if (!tx) return; // already delivered or missing — nothing to do
@@ -44,8 +45,10 @@ export async function deliverCashback(transactionId: Types.ObjectId): Promise<vo
     timezone: string;
   } | null>();
   if (campaign && campaign.expiryMode === ExpiryMode.AFTER_DAYS) {
+    // Measure expiry from the scheduled delivery instant, so a late tick does not extend the
+    // credit's life. Falls back to now if deliverAt is somehow unset.
     const expiresAt = scheduleAt(
-      new Date(),
+      tx.deliverAt ?? new Date(),
       campaign.expiryDays ?? 0,
       campaign.expiryTime ?? '00:00',
       campaign.timezone,
