@@ -11,15 +11,15 @@ export interface CampaignShape extends ICampaign {
 }
 
 /**
- * Display status with precedence Expired > Disabled > Scheduled > Active. Expiry wins even
- * when disabled; archived campaigns are filtered out before this is called.
+ * Display status with precedence Disabled > Expired > Scheduled > Active. Disabled wins over
+ * every other state; archived campaigns are filtered out before this is called.
  */
 export function deriveStatus(
   c: Pick<ICampaign, 'isEnabled' | 'startAt' | 'endAt'>,
   now: Date,
 ): CampaignStatus {
-  if (c.endAt && now.getTime() > c.endAt.getTime()) return 'EXPIRED';
   if (!c.isEnabled) return 'DISABLED';
+  if (c.endAt && now.getTime() > c.endAt.getTime()) return 'EXPIRED';
   if (c.startAt && now.getTime() < c.startAt.getTime()) return 'SCHEDULED';
   return 'ACTIVE';
 }
