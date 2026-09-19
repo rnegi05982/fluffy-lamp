@@ -129,5 +129,6 @@ serialized as a string with its currency.
 ## Scheduler
 
 Delayed delivery and expiry are persisted as `scheduled_operations` and processed by a
-worker (`runTick`). The in-process `node-cron` heartbeat (see `server.ts`) is currently
-commented out, so drive ticks with `POST /api/scheduler/tick`.
+worker (`runTick`), which is triggered by `POST /api/scheduler/tick`. The in-process
+`node-cron` heartbeat (see `server.ts`) is commented out; in the deployed demo a MongoDB
+Atlas Scheduled Trigger calls the tick endpoint on a schedule.
