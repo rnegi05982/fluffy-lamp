@@ -2,7 +2,7 @@ import type { Money } from '../../../domain/money';
 
 /**
  * Customer facts from the DB: global tags and the per-store lifetime spend (already in base
- * currency, including the current order).
+ * currency, and already including the current order — it is recorded before cashback runs).
  */
 export function customerFacts(
   tags: string[],

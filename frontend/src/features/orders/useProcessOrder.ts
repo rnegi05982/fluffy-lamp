@@ -11,29 +11,14 @@ export interface ProcessOrderRequest {
   orderTimezone: string;
 }
 
-export interface OrderOutcome {
+export interface OrderResult {
   orderId: string;
-  outcome: 'CASHBACK_EARNED' | 'NO_CASHBACK';
-  selectedCampaign: { campaignId: string; campaignName: string; tierId: string; rank: number } | null;
-  cashback: {
-    originalAmount: string;
-    originalCurrency: string;
-    fxRate: number;
-    baseAmount: string;
-    baseCurrency: string;
-    delivery: 'IMMEDIATE' | 'DELAYED';
-    deliverAt: string | null;
-    expiresAt: string | null;
-  } | null;
-  transactionId: string | null;
-  reason: string | null;
-  cashbackError: string | null;
 }
 
 export function useProcessOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: ProcessOrderRequest) => api.post<OrderOutcome>('/orders/process', body),
+    mutationFn: (body: ProcessOrderRequest) => api.post<OrderResult>('/orders/process', body),
     onSuccess: () => {
       // Balances / ledgers changed — refresh customer views.
       qc.invalidateQueries({ queryKey: ['customers'] });

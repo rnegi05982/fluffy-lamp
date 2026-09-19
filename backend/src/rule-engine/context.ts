@@ -1,9 +1,7 @@
 import { Types } from 'mongoose';
 import type { Money } from '../domain/money';
-import { add } from '../lib/money/decimal';
-import { convertToBase } from '../lib/money/fx';
 import { Customer, CustomerStoreAccount, Product } from '../models';
-import { BASE_CURRENCY, FX_RATES } from '../modules/reference/reference.data';
+import { BASE_CURRENCY } from '../modules/reference/reference.data';
 import { cartFacts } from './facts/providers/cartFacts';
 import { customerFacts } from './facts/providers/customerFacts';
 import { productFacts, type ProductMeta } from './facts/providers/productFacts';
@@ -41,11 +39,9 @@ export async function buildContext(order: OrderContextInput): Promise<EvalContex
   ]);
 
   const tags = customer?.tags ?? [];
-  // Lifetime spend counts the current order too: past spend (base currency) plus this order
-  // converted to base. The stored value is incremented after cashback, so it is past-only here.
-  const pastSpentBase = account?.lifetimeSpent ?? '0';
-  const currentOrderBase = convertToBase(order.orderAmount, order.orderCurrency, FX_RATES);
-  const lifetimeSpent = add(pastSpentBase, currentOrderBase).toString();
+  // Lifetime spend already includes the current order: the order flow records the spend before
+  // dispatching cashback, so the stored value is the up-to-date total.
+  const lifetimeSpent = account?.lifetimeSpent ? account.lifetimeSpent.toString() : '0';
 
   const productsById = new Map<string, ProductMeta>(
     products.map((p) => [

@@ -1,17 +1,14 @@
 import { Types } from 'mongoose';
-import { Store, Customer, Product, Order, CustomerStoreAccount } from '../../models';
+import { Store, Customer, Product, Order } from '../../models';
 import { ApiError } from '../../lib/ApiError';
-import { logger } from '../../lib/logger';
 import { toDecimal128, toStringValue } from '../../lib/money/decimal';
-import { convertToBase } from '../../lib/money/fx';
 import { zonedToUtc } from '../../lib/time/zoned';
-import { FX_RATES } from '../reference/reference.data';
-import { processCashback, type CashbackOutcome } from '../../cashback/processor';
+import { accumulateLifetimeSpent } from '../customerStoreAccount/customerStoreAccount.service';
+import { dispatchCashback } from '../../cashback/dispatch';
 import type { ProcessOrderRequest } from './orders.validation';
 
-export interface ProcessOrderResult extends CashbackOutcome {
+export interface ProcessOrderResult {
   orderId: string;
-  cashbackError: string | null;
 }
 
 interface ProductWithVariants {
@@ -19,20 +16,19 @@ interface ProductWithVariants {
   variants: { variantId: string; price: Types.Decimal128 }[];
 }
 
-export async function processOrder(input: ProcessOrderRequest): Promise<ProcessOrderResult> {
-  const [store, customer] = await Promise.all([
-    Store.findById(input.storeId).lean<{ _id: Types.ObjectId } | null>(),
-    Customer.findById(input.customerId).lean<{ _id: Types.ObjectId } | null>(),
-  ]);
-  if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
-  if (!customer) throw ApiError.notFound('CUSTOMER_NOT_FOUND', 'Customer not found');
+interface OrderLineItem {
+  productId: Types.ObjectId;
+  variantId: string;
+  quantity: number;
+  unitPrice: Types.Decimal128;
+}
 
-  const productIds = [...new Set(input.lineItems.map((li) => li.productId))];
-  const products = await Product.find({ _id: { $in: productIds } }).lean<ProductWithVariants[]>();
-  const productsById = new Map(products.map((p) => [p._id.toString(), p]));
-
-  // Validate + snapshot the unit price of each line item's variant.
-  const lineItems = input.lineItems.map((li) => {
+/** Validate each line item against its product/variant and snapshot the unit price. */
+function buildLineItems(
+  items: ProcessOrderRequest['lineItems'],
+  productsById: Map<string, ProductWithVariants>,
+): OrderLineItem[] {
+  return items.map((li) => {
     const product = productsById.get(li.productId);
     if (!product) throw ApiError.badRequest('INVALID_LINE_ITEM', `Unknown product: ${li.productId}`);
     const variant = product.variants.find((v) => v.variantId === li.variantId);
@@ -46,11 +42,32 @@ export async function processOrder(input: ProcessOrderRequest): Promise<ProcessO
       unitPrice: variant.price,
     };
   });
+}
 
+/**
+ * Handle the process-order use case: validate, persist the order, record the customer's spend,
+ * then hand cashback off to its dispatcher. Cashback is a downstream reaction — its result is
+ * not part of the order response.
+ */
+export async function processOrder(input: ProcessOrderRequest): Promise<ProcessOrderResult> {
+  const [store, customer] = await Promise.all([
+    Store.findById(input.storeId).lean<{ _id: Types.ObjectId } | null>(),
+    Customer.findById(input.customerId).lean<{ _id: Types.ObjectId } | null>(),
+  ]);
+  if (!store) throw ApiError.notFound('STORE_NOT_FOUND', 'Store not found');
+  if (!customer) throw ApiError.notFound('CUSTOMER_NOT_FOUND', 'Customer not found');
+
+  const productIds = [...new Set(input.lineItems.map((li) => li.productId))];
+  const products = await Product.find({ _id: { $in: productIds } }).lean<ProductWithVariants[]>();
+  const productsById = new Map(products.map((p) => [p._id.toString(), p]));
+
+  const lineItems = buildLineItems(input.lineItems, productsById);
   const orderAmount = toStringValue(input.orderAmount);
   const orderCreatedAt = zonedToUtc(input.orderCreatedAt, input.orderTimezone);
 
-  // 1. Persist the order (always succeeds; cashback below is fault-isolated).
+  // 1. Order-core: persist the order and record the customer's spend. Both are facts of the
+  //    order itself, independent of cashback; recording spend here lets cashback read the
+  //    up-to-date lifetime total straight from the DB.
   const order = await Order.create({
     storeId: new Types.ObjectId(input.storeId),
     customerId: new Types.ObjectId(input.customerId),
@@ -60,40 +77,20 @@ export async function processOrder(input: ProcessOrderRequest): Promise<ProcessO
     orderCreatedAt,
     orderTimezone: input.orderTimezone,
   });
+  await accumulateLifetimeSpent(input.customerId, input.storeId, orderAmount, input.orderCurrency);
 
-  // 2. Cashback — never fails the order.
-  let outcome: CashbackOutcome;
-  let cashbackError: string | null = null;
-  try {
-    outcome = await processCashback({
-      orderId: order._id,
-      storeId: input.storeId,
-      customerId: input.customerId,
-      lineItems: input.lineItems,
-      orderAmount,
-      orderCurrency: input.orderCurrency,
-      orderCreatedAt,
-    });
-  } catch (err) {
-    logger.error('Cashback processing failed', err);
-    cashbackError = err instanceof Error ? err.message : 'Cashback processing failed';
-    outcome = {
-      outcome: 'NO_CASHBACK',
-      selectedCampaign: null,
-      cashback: null,
-      transactionId: null,
-      reason: null,
-    };
-  }
+  // 2. Hand cashback off to its dispatcher (fault-isolated; never fails the order).
+  // FUTURE (scalability): replace this in-process call with a queue enqueue so cashback runs
+  // off the request path — no other change to the order flow is needed.
+  await dispatchCashback({
+    orderId: order._id,
+    storeId: input.storeId,
+    customerId: input.customerId,
+    lineItems: input.lineItems,
+    orderAmount,
+    orderCurrency: input.orderCurrency,
+    orderCreatedAt,
+  });
 
-  // 3. Accumulate lifetime spend. Eligibility already added this order in-memory, so the
-  //    increment must stay here (after cashback) to avoid double-counting it.
-  const orderBase = convertToBase(orderAmount, input.orderCurrency, FX_RATES);
-  await CustomerStoreAccount.findOneAndUpdate(
-    { customerId: new Types.ObjectId(input.customerId), storeId: new Types.ObjectId(input.storeId) },
-    { $inc: { lifetimeSpent: orderBase } },
-    { upsert: true, new: true },
-  );
-
-  return { orderId: order._id.toString(), ...outcome, cashbackError };
+  return { orderId: order._id.toString() };
 }

@@ -16,7 +16,7 @@ import { useReference, toCurrencyOptions, toTimezoneOptions } from '@/features/r
 import { useProducts } from '@/features/products/useProducts';
 import { useCustomers } from '@/features/customers/useCustomers';
 import { useStores } from '@/features/stores/useStores';
-import { useProcessOrder, type OrderOutcome } from './useProcessOrder';
+import { useProcessOrder } from './useProcessOrder';
 import styles from './OrderForm.module.css';
 
 interface LineItemDraft {
@@ -29,22 +29,6 @@ function nowLocalInput(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function announce(outcome: OrderOutcome) {
-  if (outcome.cashbackError) {
-    toast.warning('Order saved — cashback could not be computed', { description: outcome.cashbackError });
-    return;
-  }
-  if (outcome.outcome === 'CASHBACK_EARNED' && outcome.cashback && outcome.selectedCampaign) {
-    const c = outcome.cashback;
-    const when = c.delivery === 'IMMEDIATE' ? 'credited now' : `scheduled for ${c.deliverAt?.slice(0, 10)}`;
-    toast.success(`${outcome.selectedCampaign.campaignName}: ${c.baseAmount} ${c.baseCurrency}`, {
-      description: `Cashback ${when}.`,
-    });
-    return;
-  }
-  toast('No cashback earned', { description: outcome.reason ?? 'No qualifying campaign for this order.' });
 }
 
 export function OrderForm() {
@@ -130,8 +114,8 @@ export function OrderForm() {
         orderTimezone,
       },
       {
-        onSuccess: (outcome) => {
-          announce(outcome);
+        onSuccess: () => {
+          toast.success('Order placed', { description: 'Cashback is being processed.' });
           clear();
         },
         onError: (err) => {

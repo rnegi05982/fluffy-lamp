@@ -1,22 +1,49 @@
-import { useEffect, useState } from 'react';
-import { Store as StoreIcon, Plus, ShoppingCart, Percent, Users, ChevronRight } from 'lucide-react';
-import type { View } from '@/store/appStore';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { Dialog } from '@/components/ui/Dialog';
-import { Select } from '@/components/ui/Select';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { useStores } from '@/features/stores/useStores';
-import { StoreForm } from '@/features/stores/StoreForm';
-import { useAppStore } from '@/store/appStore';
-import styles from './Home.module.css';
+import { useEffect, useState } from "react";
+import {
+  Store as StoreIcon,
+  Plus,
+  ShoppingCart,
+  Percent,
+  Users,
+  ChevronRight,
+} from "lucide-react";
+import type { View } from "@/store/appStore";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Dialog } from "@/components/ui/Dialog";
+import { Select } from "@/components/ui/Select";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useStores } from "@/features/stores/useStores";
+import { StoreForm } from "@/features/stores/StoreForm";
+import { useAppStore } from "@/store/appStore";
+import styles from "./Home.module.css";
 
-const TILES: { view: View; icon: typeof ShoppingCart; title: string; desc: string }[] = [
-  { view: 'order-form', icon: ShoppingCart, title: 'New Order', desc: 'Simulate an order and run the cashback engine.' },
-  { view: 'campaigns', icon: Percent, title: 'Campaigns', desc: 'Create and manage cashback campaigns.' },
-  { view: 'customers', icon: Users, title: 'Customers', desc: 'View customers and their cashback balances.' },
+const TILES: {
+  view: View;
+  icon: typeof ShoppingCart;
+  title: string;
+  desc: string;
+}[] = [
+  {
+    view: "order-form",
+    icon: ShoppingCart,
+    title: "New Order",
+    desc: "Simulate an order and run the cashback engine.",
+  },
+  {
+    view: "campaigns",
+    icon: Percent,
+    title: "Campaigns",
+    desc: "Create and manage cashback campaigns.",
+  },
+  {
+    view: "customers",
+    icon: Users,
+    title: "Customers",
+    desc: "View customers and their cashback balances.",
+  },
 ];
 
 export function Home() {
@@ -47,7 +74,9 @@ export function Home() {
   }
 
   if (isError) {
-    return <ErrorState message="Couldn't load stores." onRetry={() => refetch()} />;
+    return (
+      <ErrorState message="Couldn't load stores." onRetry={() => refetch()} />
+    );
   }
 
   if (stores.length === 0) {
@@ -63,7 +92,11 @@ export function Home() {
             </Button>
           }
         />
-        <Dialog open={createOpen} onClose={() => setCreateOpen(false)} title="Create store">
+        <Dialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          title="Create store"
+        >
           <StoreForm onDone={() => setCreateOpen(false)} />
         </Dialog>
       </>
@@ -78,7 +111,11 @@ export function Home() {
     <div className={styles.page}>
       <div className={styles.switcherRow}>
         <div className={styles.switcher}>
-          <Select value={activeStore.id} onChange={setActiveStore} options={storeOptions} />
+          <Select
+            value={activeStore.id}
+            onChange={setActiveStore}
+            options={storeOptions}
+          />
         </div>
         <Button variant="secondary" onClick={() => setCreateOpen(true)}>
           <Plus size={16} /> Create store
@@ -110,7 +147,11 @@ export function Home() {
 
       <div className={styles.tiles}>
         {TILES.map((t) => (
-          <button key={t.view} className={styles.tile} onClick={() => navigate(t.view)}>
+          <button
+            key={t.view}
+            className={styles.tile}
+            onClick={() => navigate(t.view)}
+          >
             <span className={styles.tileIcon}>
               <t.icon size={20} />
             </span>
@@ -123,7 +164,11 @@ export function Home() {
         ))}
       </div>
 
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} title="Create store">
+      <Dialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create store"
+      >
         <StoreForm onDone={() => setCreateOpen(false)} />
       </Dialog>
     </div>
