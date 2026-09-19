@@ -3,14 +3,14 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Table } from '@/components/ui/Table';
+import { Table, TableSkeleton, TableEmptyRow } from '@/components/ui/Table';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Dialog } from '@/components/ui/Dialog';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/store/appStore';
 import { getApiErrorMessage } from '@/lib/api';
 import { formatLocal } from '@/lib/format';
@@ -88,12 +88,7 @@ export function Campaigns() {
       />
 
       {isError ? (
-        <div className={styles.stateBox}>
-          Couldn&apos;t load campaigns.{' '}
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </div>
+        <ErrorState message="Couldn't load campaigns." onRetry={() => refetch()} />
       ) : (
         <Table>
           <colgroup>
@@ -112,34 +107,19 @@ export function Campaigns() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <tr key={i}>
-                  <td>
-                    <Skeleton width={160} />
-                  </td>
-                  <td>
-                    <Skeleton width={70} />
-                  </td>
-                  <td>
-                    <Skeleton width={220} />
-                  </td>
-                  <td />
-                </tr>
-              ))
+              <TableSkeleton rows={4} cols={4} />
             ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={4}>
-                  <EmptyState
-                    title="No campaigns yet"
-                    description="Create your first campaign for this store."
-                    action={
-                      <Button onClick={() => navigate('campaign-form')}>
-                        <Plus size={16} /> New Campaign
-                      </Button>
-                    }
-                  />
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={4}>
+                <EmptyState
+                  title="No campaigns yet"
+                  description="Create your first campaign for this store."
+                  action={
+                    <Button onClick={() => navigate('campaign-form')}>
+                      <Plus size={16} /> New Campaign
+                    </Button>
+                  }
+                />
+              </TableEmptyRow>
             ) : (
               items.map((c) => (
                 <tr key={c.id}>

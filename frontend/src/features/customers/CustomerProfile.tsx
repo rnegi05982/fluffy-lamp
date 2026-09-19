@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Segmented } from '@/components/ui/Segmented';
 import { Tabs } from '@/components/ui/Tabs';
-import { Table } from '@/components/ui/Table';
+import { Table, TableSkeleton, TableEmptyRow } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -60,6 +60,7 @@ export function CustomerProfile() {
   const items = txData?.items ?? [];
   const meta = txData?.meta;
   const isUserView = view === 'user';
+  const colCount = isUserView ? 6 : 5;
 
   const changeView = (v: string) => {
     setView(v as 'store' | 'user');
@@ -137,19 +138,11 @@ export function CustomerProfile() {
         </thead>
         <tbody>
           {txLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <tr key={i}>
-                <td colSpan={isUserView ? 6 : 5}>
-                  <Skeleton height={16} />
-                </td>
-              </tr>
-            ))
+            <TableSkeleton rows={4} cols={colCount} />
           ) : items.length === 0 ? (
-            <tr>
-              <td colSpan={isUserView ? 6 : 5}>
-                <EmptyState title="No transactions" />
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={colCount}>
+              <EmptyState title="No transactions" />
+            </TableEmptyRow>
           ) : (
             items.map((tx) => (
               <tr key={tx.id}>

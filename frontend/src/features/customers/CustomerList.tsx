@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Table } from '@/components/ui/Table';
+import { Table, TableSkeleton, TableEmptyRow } from '@/components/ui/Table';
 import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useAppStore } from '@/store/appStore';
 import { useStores } from '@/features/stores/useStores';
 import { formatInTz, formatMoney } from '@/lib/format';
@@ -48,12 +47,7 @@ export function CustomerList() {
       <p className={styles.note}>Balances shown for {activeStore.name} ({activeStore.currency}).</p>
 
       {isError ? (
-        <div className={styles.stateBox}>
-          Couldn&apos;t load customers.{' '}
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </div>
+        <ErrorState message="Couldn't load customers." onRetry={() => refetch()} />
       ) : (
         <Table>
           <colgroup>
@@ -72,20 +66,11 @@ export function CustomerList() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
-                  <td><Skeleton width={140} /></td>
-                  <td><Skeleton width={180} /></td>
-                  <td><Skeleton width={80} /></td>
-                  <td><Skeleton width={120} /></td>
-                </tr>
-              ))
+              <TableSkeleton rows={5} cols={4} />
             ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={4}>
-                  <EmptyState title={search ? `No customers match “${search}”` : 'No customers'} />
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={4}>
+                <EmptyState title={search ? `No customers match “${search}”` : 'No customers'} />
+              </TableEmptyRow>
             ) : (
               rows.map((c) => (
                 <tr key={c.id} className={styles.row} onClick={() => navigate('customer-profile', c.id)}>

@@ -4,6 +4,7 @@ import type { View } from '@/store/appStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Dialog } from '@/components/ui/Dialog';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -46,16 +47,7 @@ export function Home() {
   }
 
   if (isError) {
-    return (
-      <Card>
-        <p className={styles.error}>
-          Couldn&apos;t load stores.{' '}
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </p>
-      </Card>
-    );
+    return <ErrorState message="Couldn't load stores." onRetry={() => refetch()} />;
   }
 
   if (stores.length === 0) {
