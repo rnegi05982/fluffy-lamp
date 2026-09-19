@@ -16,9 +16,11 @@ export function utcToZoned(instant: Date, tz: string): string {
 }
 
 /**
- * Delivery/expiry target: take the calendar date of `baseInstant` in `tz`, add `days + 1`
- * calendar days (so days = 0 means the next day), set the time to `HH:MM`, and return the
- * UTC instant. Calendar add is DST-safe.
+ * Delivery/expiry target: take the calendar date of `baseInstant` in `tz`, add `days`
+ * calendar days (so days = 0 means the same day), set the time to `HH:MM`, and return the
+ * UTC instant. Calendar add is DST-safe. If the resulting time-of-day is earlier than
+ * `baseInstant` (e.g. days = 0 with a time already passed), the target is in the past and the
+ * scheduler picks it up on the next tick.
  */
 export function scheduleAt(baseInstant: Date, days: number, timeOfDay: string, tz: string): Date {
   const [hStr, mStr] = timeOfDay.split(':');
@@ -27,7 +29,7 @@ export function scheduleAt(baseInstant: Date, days: number, timeOfDay: string, t
 
   return dayjs(baseInstant)
     .tz(tz)
-    .add(days + 1, 'day')
+    .add(days, 'day')
     .hour(hour)
     .minute(minute)
     .second(0)
