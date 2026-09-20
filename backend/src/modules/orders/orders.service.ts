@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Store, Customer, Product, Order } from '../../models';
 import { ApiError } from '../../lib/ApiError';
 import { toDecimal128, toStringValue } from '../../lib/money/decimal';
@@ -65,25 +65,40 @@ export async function processOrder(input: ProcessOrderRequest): Promise<ProcessO
   const orderAmount = toStringValue(input.orderAmount);
   const orderCreatedAt = zonedToUtc(input.orderCreatedAt, input.orderTimezone);
 
-  // 1. Order-core: persist the order and record the customer's spend. Both are facts of the
-  //    order itself, independent of cashback; recording spend here lets cashback read the
-  //    up-to-date lifetime total straight from the DB.
-  const order = await Order.create({
-    storeId: new Types.ObjectId(input.storeId),
-    customerId: new Types.ObjectId(input.customerId),
-    lineItems,
-    orderAmount: toDecimal128(orderAmount),
-    orderCurrency: input.orderCurrency,
-    orderCreatedAt,
-    orderTimezone: input.orderTimezone,
-  });
-  await accumulateLifetimeSpent(input.customerId, input.storeId, orderAmount, input.orderCurrency);
+  // 1. Persist the order and record the customer's spend atomically — both commit or neither.
+  const session = await mongoose.startSession();
+  let orderId: Types.ObjectId;
+  try {
+    session.startTransaction();
+    const order = await new Order({
+      storeId: new Types.ObjectId(input.storeId),
+      customerId: new Types.ObjectId(input.customerId),
+      lineItems,
+      orderAmount: toDecimal128(orderAmount),
+      orderCurrency: input.orderCurrency,
+      orderCreatedAt,
+      orderTimezone: input.orderTimezone,
+    }).save({ session });
+    await accumulateLifetimeSpent(
+      input.customerId,
+      input.storeId,
+      orderAmount,
+      input.orderCurrency,
+      session,
+    );
+    await session.commitTransaction();
+    orderId = order._id;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 
-  // 2. Hand cashback off to its dispatcher (fault-isolated; never fails the order).
-  // FUTURE (scalability): replace this in-process call with a queue enqueue so cashback runs
-  // off the request path — no other change to the order flow is needed.
+  // 2. Cashback runs after commit (reads the durable lifetime total; fault-isolated, never fails the order).
+  // FUTURE (scalability): swap this in-process call for a queue enqueue to run cashback off the request path.
   await dispatchCashback({
-    orderId: order._id,
+    orderId,
     storeId: input.storeId,
     customerId: input.customerId,
     lineItems: input.lineItems,
@@ -92,5 +107,5 @@ export async function processOrder(input: ProcessOrderRequest): Promise<ProcessO
     orderCreatedAt,
   });
 
-  return { orderId: order._id.toString() };
+  return { orderId: orderId.toString() };
 }
