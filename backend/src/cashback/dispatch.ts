@@ -10,6 +10,11 @@ export async function dispatchCashback(event: ProcessOrderInput): Promise<void> 
   try {
     await processCashback(event);
   } catch (err) {
-    logger.error('Cashback processing failed', err);
+    logger.error('Cashback processing failed', {
+      orderId: event.orderId.toString(),
+      storeId: event.storeId,
+      customerId: event.customerId,
+      err,
+    });
   }
 }
