@@ -71,6 +71,13 @@ export async function runTick(): Promise<{
       processed += 1;
     } catch (err) {
       op.failureReason = err instanceof Error ? err.message : 'Handler error';
+      const logContext = {
+        opId: op._id.toString(),
+        type: op.type,
+        transactionId: op.transactionId.toString(),
+        attempts: op.attempts,
+        err,
+      };
       if (op.attempts < MAX_ATTEMPTS) {
         // Transient: release for another attempt, pushed past this drain so it retries later.
         op.status = ScheduledOperationStatus.PENDING;
@@ -78,13 +85,14 @@ export async function runTick(): Promise<{
         op.runAt = new Date(now.getTime() + RETRY_BACKOFF_MS * op.attempts);
         await op.save();
         retried += 1;
+        logger.warn('Scheduled operation failed; will retry', logContext);
       } else {
         op.status = ScheduledOperationStatus.FAILED;
         op.processedAt = new Date();
         await op.save();
         failed += 1;
+        logger.error('Scheduled operation permanently FAILED — needs manual intervention', logContext);
       }
-      logger.error('Scheduled operation failed', err);
     }
   }
 
